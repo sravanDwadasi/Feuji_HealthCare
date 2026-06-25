@@ -4,7 +4,7 @@
 
 The Healthcare Connector Platform is a microservices-based application developed to streamline communication between healthcare providers and payers during the authorization process.
 
-Traditional authorization workflows often involve incomplete requests, resulting in repeated communication between providers and payers. This solution introduces an AI Copilot that validates authorization requests before submission, helping providers identify and correct missing information early in the process.
+Traditional authorization workflows often involve incomplete requests, resulting in repeated communication between providers and payers. This solution introduces an **AI Copilot powered by Google Gemini**, which reviews authorization requests before submission and provides intelligent recommendations to help providers identify missing information, improve clinical documentation, and reduce authorization rework.
 
 The application consists of three Spring Boot microservices and a React-based frontend.
 
@@ -22,7 +22,7 @@ Feuji_HealthCare
 │   └── Handles authorization review, approval and rejection
 │
 ├── ai-service
-│   └── Provides AI-based request validation and recommendations
+│   └── Integrates with Google Gemini AI for intelligent authorization review
 │
 └── UI
     └── healthcare-ui
@@ -35,7 +35,7 @@ Feuji_HealthCare
 
 ## Backend
 
-* Java 17
+* Java 21
 * Spring Boot
 * Spring Data JPA
 * MySQL
@@ -46,6 +46,11 @@ Feuji_HealthCare
 
 * React
 * Bootstrap
+
+## AI
+
+* Google Gemini 2.5 Flash API
+* REST Integration
 
 ## Database
 
@@ -76,15 +81,14 @@ Port: **8082**
 
 Responsibilities:
 
-* Review authorization requests
-* Detect missing information
-* Recommend corrections before submission
+* Integrates with Google Gemini AI
+* Reviews authorization requests before submission
+* Identifies missing mandatory information
+* Evaluates clinical notes
+* Provides intelligent recommendations
+* Determines whether the request is ready for submission
 
-Example recommendations:
-
-* Insurance ID is missing
-* Clinical Notes are missing
-* Request looks good. Ready for submission
+Instead of predefined validation rules, the AI Service communicates with Google Gemini and generates contextual recommendations based on the authorization request.
 
 ---
 
@@ -114,6 +118,19 @@ Responsibilities:
 
 ---
 
+## AI Copilot Workflow
+
+1. Provider creates an authorization request.
+2. Provider clicks **AI Review**.
+3. Provider Service sends the request to the AI Service.
+4. AI Service forwards the request to Google Gemini.
+5. Google Gemini analyzes the request.
+6. AI recommendations are returned to the Provider Service.
+7. Provider updates the request if required.
+8. Provider submits the request to the Payer Service.
+
+---
+
 ## Payer Workflow
 
 1. View Submitted Requests
@@ -139,7 +156,7 @@ A notification is automatically created and displayed in the Provider applicatio
 
 # Request Lifecycle
 
-Successful Flow:
+Successful Flow
 
 ```text
 DRAFT
@@ -153,7 +170,7 @@ UNDER_REVIEW
 APPROVED
 ```
 
-Rejection Flow:
+Rejection Flow
 
 ```text
 DRAFT
@@ -205,7 +222,7 @@ http://localhost:5173
 
 # Database Setup
 
-Create the following databases before starting the services:
+Create the following databases before starting the services.
 
 ```sql
 CREATE DATABASE provider_db;
@@ -227,16 +244,17 @@ Ensure MySQL is running and the required databases are created.
 
 ## Step 2 - Start Backend Services
 
-Start the services in the following order:
+Start the services in the following order.
 
 ### AI Service
 
 ```bash
 cd ai-service
+
 mvn spring-boot:run
 ```
 
-Runs on:
+Runs on
 
 ```text
 http://localhost:8082
@@ -248,10 +266,11 @@ http://localhost:8082
 
 ```bash
 cd payer-service
+
 mvn spring-boot:run
 ```
 
-Runs on:
+Runs on
 
 ```text
 http://localhost:8083
@@ -263,10 +282,11 @@ http://localhost:8083
 
 ```bash
 cd provider-service
+
 mvn spring-boot:run
 ```
 
-Runs on:
+Runs on
 
 ```text
 http://localhost:8081
@@ -284,7 +304,7 @@ npm install
 npm run dev
 ```
 
-Frontend URL:
+Frontend URL
 
 ```text
 http://localhost:5173
@@ -336,13 +356,13 @@ POST http://localhost:8081/provider/requests
 POST http://localhost:8081/provider/requests/1/review
 ```
 
-### Response
+### Sample Response
 
 ```json
 {
   "id": 1,
   "status": "DRAFT",
-  "aiRecommendation": "Insurance ID is missing."
+  "aiRecommendation": "Summary:\nThe authorization request is incomplete.\n\nMissing Information:\nInsurance ID\n\nClinical Notes Review:\nClinical notes should include symptoms, duration and medical necessity.\n\nRecommendations:\n• Add the Insurance ID.\n• Expand the clinical notes with additional clinical details.\n• Review the request before submission.\n\nReady For Submission:\nNO"
 }
 ```
 
@@ -362,7 +382,7 @@ PUT http://localhost:8081/provider/requests/1
   "insuranceId": "INS123",
   "diagnosisCode": "D001",
   "procedureCode": "MRI001",
-  "clinicalNotes": "Back Pain"
+  "clinicalNotes": "Patient has severe lower back pain for three weeks. Conservative treatment has failed. MRI requested to evaluate lumbar disc pathology."
 }
 ```
 
@@ -387,7 +407,7 @@ POST http://localhost:8081/provider/requests/1/submit
 
 ### Response
 
-Request is forwarded to the Payer Service and status is updated.
+The request is forwarded to the Payer Service and the status changes to **UNDER_REVIEW**.
 
 ---
 
@@ -480,48 +500,49 @@ PUT http://localhost:8083/payer/requests/1/reject
 
 ## Scenario 1 - Successful Approval Flow
 
-1. Create a request without Insurance ID.
-2. Review the request using AI Copilot.
-3. Verify AI recommends adding Insurance ID.
-4. Edit and update the request.
-5. Review again.
-6. Verify AI recommendation says request is ready.
-7. Submit request.
-8. Verify status becomes UNDER_REVIEW.
-9. Open Payer Dashboard.
-10. Approve request.
-11. Verify Provider status becomes APPROVED.
-12. Verify notification is generated.
+1. Create an authorization request with incomplete information.
+2. Click **AI Review**.
+3. Verify that Google Gemini AI identifies missing information and provides recommendations.
+4. Update the authorization request.
+5. Run AI Review again.
+6. Verify that the AI indicates the request is ready for submission.
+7. Submit the request.
+8. Verify the request status changes to **UNDER_REVIEW**.
+9. Open the Payer Dashboard.
+10. Approve the request.
+11. Verify the Provider dashboard displays the status as **APPROVED**.
+12. Verify a notification is generated.
 
 ---
 
 ## Scenario 2 - Rejection Flow
 
-1. Create request.
-2. Review using AI.
-3. Submit request.
-4. Open Payer Dashboard.
-5. Reject request with comments.
-6. Verify status becomes REJECTED.
-7. Verify notification is generated.
-8. Edit request.
-9. Review again.
-10. Resubmit request.
+1. Create an authorization request.
+2. Review the request using AI Copilot.
+3. Submit the request.
+4. Open the Payer Dashboard.
+5. Reject the request with comments.
+6. Verify the Provider dashboard displays the status as **REJECTED**.
+7. Verify a notification is generated.
+8. Edit the request.
+9. Run AI Review again.
+10. Resubmit the request.
 
 ---
 
 # Features Implemented
 
 * Authorization Request Management
-* AI Copilot Validation
-* Request Update Workflow
+* Google Gemini AI Copilot Integration
+* Intelligent AI-Based Authorization Review
+* Authorization Request Update Workflow
 * Provider-Payer Communication
 * Approval Workflow
 * Rejection Workflow
-* Status Tracking
+* Request Status Tracking
 * Notification Management
 * React Frontend
 * Spring Boot Microservices
 * MySQL Persistence
-* REST-Based Communication
+* REST-Based Service Communication
 * End-to-End Authorization Lifecycle
