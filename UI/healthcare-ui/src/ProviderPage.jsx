@@ -46,6 +46,7 @@ function ProviderPage() {
             clinicalNotes: ""
         });
     };
+
     const updateRequest = async () => {
 
         await axios.put(
@@ -140,6 +141,7 @@ function ProviderPage() {
             <textarea
                 className="form-control mb-2"
                 placeholder="Clinical Notes"
+                rows="4"
                 value={form.clinicalNotes}
                 onChange={(e) =>
                     setForm({
@@ -170,14 +172,16 @@ function ProviderPage() {
 
             </button>
 
-            <table className="table table-bordered">
+            <table className="table table-bordered align-middle">
 
-                <thead>
+                <thead className="table-light">
                     <tr>
                         <th>ID</th>
                         <th>Patient</th>
                         <th>Status</th>
-                        <th>AI Recommendation</th>
+                        <th style={{ width: "45%" }}>
+                            AI Recommendation
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -192,27 +196,44 @@ function ProviderPage() {
 
                             <td>{request.patientName}</td>
 
-                            <td>{request.status}</td>
+                            <td>
+                                <strong>{request.status}</strong>
+                            </td>
 
-                            <td>{request.aiRecommendation}</td>
+                            <td style={{ minWidth: "450px" }}>
+                                <div
+                                    className="border rounded p-2 bg-light"
+                                    style={{
+                                        whiteSpace: "pre-wrap",
+                                        maxHeight: "250px",
+                                        overflowY: "auto",
+                                        fontSize: "14px"
+                                    }}
+                                >
+                                    {request.aiRecommendation || "No AI Review yet"}
+                                </div>
+                            </td>
 
                             <td>
 
                                 <button
-                                    className="btn btn-warning btn-sm me-2"
+                                    className="btn btn-warning btn-sm me-2 mb-1"
                                     disabled={
+                                        request.status === "SUBMITTED" ||
+                                        request.status === "REJECTED" ||
                                         request.status === "APPROVED"
                                     }
                                     onClick={() =>
                                         reviewRequest(request.id)
                                     }
                                 >
-                                    Ai Review
+                                    AI Review
                                 </button>
 
                                 <button
-                                    className="btn btn-info btn-sm me-2"
+                                    className="btn btn-info btn-sm me-2 mb-1"
                                     disabled={
+                                        request.status === "SUBMITTED" ||
                                         request.status === "APPROVED"
                                     }
                                     onClick={() => {
@@ -242,16 +263,11 @@ function ProviderPage() {
                                 </button>
 
                                 <button
-                                    className="btn btn-success btn-sm"
+                                    className="btn btn-success btn-sm mb-1"
                                     disabled={
-                                        !request.aiRecommendation ||
-                                        request.aiRecommendation
-                                            .toLowerCase()
-                                            .includes("missing") ||
                                         request.status === "SUBMITTED" ||
-                                        request.status === "UNDER_REVIEW" ||
-                                        request.status === "APPROVED" ||
-                                        request.status === "REJECTED"
+                                        request.status === "REJECTED" ||
+                                        request.status === "APPROVED"
                                     }
                                     onClick={() =>
                                         submitRequest(request.id)
