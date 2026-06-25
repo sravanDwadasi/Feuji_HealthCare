@@ -89,7 +89,9 @@ Responsibilities:
 * Determines whether the request is ready for submission
 
 Instead of predefined validation rules, the AI Service communicates with Google Gemini and generates contextual recommendations based on the authorization request.
-
+### In application.properties user need's to add a newly generated API KEY.
+* gemini.api.key= API-KEY
+* **Link to generate API Key:** https://aistudio.google.com/api-keys?project=gen-lang-client-0047636997
 ---
 
 ## Payer Service
